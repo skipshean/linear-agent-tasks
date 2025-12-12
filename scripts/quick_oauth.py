@@ -100,17 +100,23 @@ def main():
     
     # Setup flow
     if 'web' in client_config:
+        redirect_uri = client_config['web']['redirect_uris'][0] if client_config['web'].get('redirect_uris') else 'http://localhost:8080'
+        
+        # Create installed app config from web config
         installed_config = {
             'installed': {
                 'client_id': client_config['web']['client_id'],
                 'client_secret': client_config['web']['client_secret'],
                 'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
                 'token_uri': 'https://oauth2.googleapis.com/token',
-                'redirect_uris': client_config['web'].get('redirect_uris', ['http://localhost:8080'])
+                'redirect_uris': [redirect_uri]  # Use single redirect_uri
             }
         }
         flow = Flow.from_client_config(installed_config, SCOPES)
-        redirect_uri = client_config['web']['redirect_uris'][0] if client_config['web'].get('redirect_uris') else 'http://localhost:8080'
+        # Explicitly set the redirect_uri on the flow and OAuth2Session
+        flow.redirect_uri = redirect_uri
+        if hasattr(flow, 'oauth2session'):
+            flow.oauth2session.redirect_uri = redirect_uri
     else:
         print("Error: Web application config not found")
         return 1
@@ -127,16 +133,33 @@ def main():
             break
         time.sleep(0.5)
     
-    # Generate auth URL
+    # Generate auth URL (redirect_uri is set on flow object)
+    # Verify redirect_uri is set
+    if not hasattr(flow, 'redirect_uri') or not flow.redirect_uri:
+        flow.redirect_uri = redirect_uri
+    
     auth_url, _ = flow.authorization_url(
         prompt='consent',
         access_type='offline'
     )
     
+    # Verify redirect_uri is in the URL
+    if 'redirect_uri' not in auth_url:
+        print(f"⚠️  WARNING: redirect_uri not found in auth URL!")
+        print(f"   Expected redirect_uri: {redirect_uri}")
+        print(f"   Adding redirect_uri to URL manually...")
+        from urllib.parse import urlencode, urlparse, parse_qs, urlunparse
+        parsed = urlparse(auth_url)
+        params = parse_qs(parsed.query)
+        params['redirect_uri'] = [redirect_uri]
+        new_query = urlencode(params, doseq=True)
+        auth_url = urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+    
     print("=" * 60)
     print("OAUTH AUTHORIZATION")
     print("=" * 60)
     print(f"\n✅ Local server running on {redirect_uri}")
+    print(f"✅ Redirect URI configured: {redirect_uri}")
     print("\n1. Visit this URL in your browser:")
     print(f"\n{auth_url}\n")
     print("2. Sign in and grant permissions")
@@ -158,7 +181,7 @@ def main():
         print("Please try again")
         return 1
     
-    # Exchange code for token
+    # Exchange code for token (redirect_uri is set on flow object)
     print(f"\n✅ Code received! Exchanging for token...")
     flow.fetch_token(code=auth_code)
     credentials = flow.credentials
