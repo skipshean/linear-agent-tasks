@@ -49,25 +49,28 @@ def main():
     with open(creds_path, 'r') as f:
         client_config = json.load(f)
     
-    # Ensure redirect_uri is set correctly in config
-    if 'installed' in client_config:
-        # Make sure redirect_uris includes localhost
-        if 'redirect_uris' not in client_config['installed']:
-            client_config['installed']['redirect_uris'] = ['http://localhost']
-        elif 'http://localhost' not in client_config['installed']['redirect_uris']:
-            client_config['installed']['redirect_uris'].append('http://localhost')
-        flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
-    elif 'web' in client_config:
-        # Convert web to installed format
+    # Handle both web and installed app types
+    if 'web' in client_config:
+        # Web application - use redirect URIs from config
+        # Convert to installed format for InstalledAppFlow
         installed_config = {
             'installed': {
-                **client_config['web'],
+                'client_id': client_config['web']['client_id'],
+                'client_secret': client_config['web']['client_secret'],
+                'auth_uri': client_config['web'].get('auth_uri', 'https://accounts.google.com/o/oauth2/auth'),
+                'token_uri': client_config['web'].get('token_uri', 'https://oauth2.googleapis.com/token'),
                 'redirect_uris': client_config['web'].get('redirect_uris', ['http://localhost'])
             }
         }
         flow = InstalledAppFlow.from_client_config(installed_config, SCOPES)
+    elif 'installed' in client_config:
+        # Desktop app - ensure redirect URIs are set
+        if 'redirect_uris' not in client_config['installed']:
+            client_config['installed']['redirect_uris'] = ['http://localhost']
+        flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
     else:
         print("Error: Invalid OAuth configuration")
+        print("Expected 'web' or 'installed' key in JSON")
         return 1
     
     if code:
