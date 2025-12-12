@@ -102,6 +102,11 @@ def main():
     if 'web' in client_config:
         redirect_uri = client_config['web']['redirect_uris'][0] if client_config['web'].get('redirect_uris') else 'http://localhost:8080'
         
+        # Parse port from redirect_uri
+        from urllib.parse import urlparse
+        parsed_uri = urlparse(redirect_uri)
+        port = parsed_uri.port if parsed_uri.port else (80 if parsed_uri.scheme == 'http' else 443)
+        
         # Create installed app config from web config
         installed_config = {
             'installed': {
@@ -121,9 +126,11 @@ def main():
         print("Error: Web application config not found")
         return 1
     
-    # Start server in background
-    print("Starting local server...")
-    server_thread = threading.Thread(target=run_server, daemon=True)
+    # Start server in background on the correct port
+    print(f"Starting local server on port {port}...")
+    if port == 80:
+        print("⚠️  WARNING: Port 80 requires root privileges. If this fails, use a different redirect_uri.")
+    server_thread = threading.Thread(target=run_server, args=(port,), daemon=True)
     server_thread.start()
     
     # Wait for server to be ready
@@ -158,7 +165,7 @@ def main():
     print("=" * 60)
     print("OAUTH AUTHORIZATION")
     print("=" * 60)
-    print(f"\n✅ Local server running on {redirect_uri}")
+    print(f"\n✅ Local server running on port {port}")
     print(f"✅ Redirect URI configured: {redirect_uri}")
     print("\n1. Visit this URL in your browser:")
     print(f"\n{auth_url}\n")
