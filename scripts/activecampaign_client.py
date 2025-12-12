@@ -188,25 +188,44 @@ class ActiveCampaignClient:
         """
         Create a goal in automation.
         
+        Note: ActiveCampaign API v3 does not support direct goal creation via POST.
+        Goals must be created through the UI or by adding a goal block to an automation.
+        This method documents the goal requirement and returns instructions.
+        
         Args:
             automation_id: Automation ID
             goal_name: Goal name
             goal_type: Goal type ('contact', 'deal', 'account')
             
         Returns:
-            Created goal dictionary
+            Dictionary with goal information and manual steps required
         """
-        endpoint = '/api/3/goals'
-        data = {
-            'goal': {
-                'name': goal_name,
-                'type': goal_type,
-                'automation': automation_id
-            }
-        }
+        # Get automation details
+        automation = self.get_automation(automation_id)
+        automation_name = automation.get('name', f'Automation {automation_id}')
         
-        response = self._make_request('POST', endpoint, data)
-        return response.get('goal', {})
+        # Get automation blocks to find where goal should be added
+        blocks_endpoint = f'/api/3/automations/{automation_id}/blocks'
+        blocks_response = self._make_request('GET', blocks_endpoint)
+        blocks = blocks_response.get('automationBlocks', [])
+        
+        # Return information about what needs to be done manually
+        return {
+            'goal_name': goal_name,
+            'automation_id': automation_id,
+            'automation_name': automation_name,
+            'status': 'manual_required',
+            'message': 'ActiveCampaign API does not support direct goal creation. Goal must be added manually in the UI.',
+            'instructions': [
+                f'1. Go to ActiveCampaign → Automations → {automation_name}',
+                f'2. Add a "Goal" block to the automation',
+                f'3. Name the goal: "{goal_name}"',
+                f'4. Configure the goal trigger conditions',
+                f'5. Save the automation'
+            ],
+            'automation_url': f'https://{self.api_url.split("//")[1].split("/")[0]}/app/automations/{automation_id}',
+            'blocks_available': len(blocks) > 0
+        }
     
     def add_email_to_automation(self, automation_id: int, email_data: Dict) -> Dict:
         """

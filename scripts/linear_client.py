@@ -60,7 +60,16 @@ class LinearClient:
         
         self.rate_limit_remaining -= 1
         
-        response.raise_for_status()
+        if response.status_code != 200:
+            error_text = response.text
+            try:
+                error_json = response.json()
+                if 'errors' in error_json:
+                    raise Exception(f"Linear API errors: {error_json['errors']}")
+            except:
+                pass
+            raise Exception(f"HTTP {response.status_code}: {error_text[:500]}")
+        
         data = response.json()
         
         if 'errors' in data:
@@ -152,77 +161,80 @@ class LinearClient:
         Returns:
             Issue data dictionary
         """
-        # Linear API uses filter format for identifier search
-        query = """
-        query GetIssueByIdentifier($filter: IssueFilter) {
-            issues(filter: $filter, first: 1) {
+        # Extract team key and issue number from identifier (e.g., 'TRA-56' -> 'TRA', '56')
+        parts = identifier.split('-')
+        if len(parts) != 2:
+            raise ValueError(f"Invalid identifier format: {identifier}. Expected format: TEAM-NUMBER")
+        
+        team_key = parts[0]
+        issue_number = parts[1]
+        
+        # First, get the team ID
+        teams_query = """
+        query {
+            teams {
                 nodes {
                     id
-                    identifier
-                    title
-                    description
-                    state {
-                        id
-                        name
-                        type
-                    }
-                    priority
-                    assignee {
-                        id
-                        name
-                        email
-                    }
-                    labels {
-                        nodes {
-                            id
-                            name
-                        }
-                    }
-                    attachments {
-                        nodes {
-                            id
-                            title
-                            url
-                        }
-                    }
-                    comments {
-                        nodes {
-                            id
-                            body
-                            createdAt
-                            user {
-                                name
-                            }
-                        }
-                    }
-                    relations {
-                        nodes {
-                            id
-                            type
-                            relatedIssue {
-                                id
-                                identifier
-                                title
-                            }
-                        }
-                    }
-                    createdAt
-                    updatedAt
+                    key
+                    name
                 }
             }
         }
         """
         
-        variables = {
-            "filter": {
-                "identifier": {
-                    "eq": identifier
-                }
-            }
+        teams_data = self._make_request(teams_query)
+        teams = teams_data.get('teams', {}).get('nodes', [])
+        
+        team_id = None
+        for team in teams:
+            if team.get('key') == team_key:
+                team_id = team.get('id')
+                break
+        
+        if not team_id:
+            raise ValueError(f"Team '{team_key}' not found")
+        
+        # Now get issues for this team and find the one matching the identifier
+        # Simplified query to avoid complexity limits - fetch basic info first
+        query = """query GetTeamIssues($teamId: String!, $first: Int!) {
+  team(id: $teamId) {
+    issues(first: $first) {
+      nodes {
+        id
+        identifier
+        title
+        description
+        state {
+          id
+          name
+          type
         }
+        priority
+        assignee {
+          id
+          name
+        }
+        createdAt
+        updatedAt
+      }
+    }
+  }
+}"""
+        
+        variables = {
+            "teamId": team_id,
+            "first": 250  # Get up to 250 issues to find the one we need (Linear allows up to 250 per query)
+        }
+        
         data = self._make_request(query, variables)
-        issues = data.get('issues', {}).get('nodes', [])
-        return issues[0] if issues else {}
+        issues = data.get('team', {}).get('issues', {}).get('nodes', [])
+        
+        # Find the issue with matching identifier
+        for issue in issues:
+            if issue.get('identifier') == identifier:
+                return issue
+        
+        return {}  # Not found
     
     def update_issue_status(self, issue_id: str, status_name: str) -> Dict:
         """

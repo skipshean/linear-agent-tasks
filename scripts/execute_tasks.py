@@ -312,16 +312,29 @@ class TaskExecutor:
             automation_id = onboarding_automation.get('id')
             automation_name = onboarding_automation.get('name')
             
-            # Step 2: Create goal
-            goal = self.ac.create_goal(automation_id, goal_name, goal_type='contact')
+            # Step 2: Create goal (Note: AC API doesn't support direct goal creation)
+            goal_info = self.ac.create_goal(automation_id, goal_name, goal_type='contact')
             
             # Step 3: Update Linear issue
-            comment = f"✅ Goal '{goal_name}' created successfully.\n\n"
-            comment += f"**ActiveCampaign Details:**\n"
-            comment += f"- Automation: {automation_name} (ID: {automation_id})\n"
-            comment += f"- Goal ID: {goal.get('id', 'N/A')}\n"
-            comment += f"- Goal Type: Contact\n\n"
-            comment += f"Goal is now configured in the automation workflow."
+            if goal_info.get('status') == 'manual_required':
+                # Goal creation requires manual steps
+                comment = f"⚠️ Goal '{goal_name}' requires manual creation in ActiveCampaign UI.\n\n"
+                comment += f"**ActiveCampaign Details:**\n"
+                comment += f"- Automation: {automation_name} (ID: {automation_id})\n"
+                comment += f"- Automation URL: {goal_info.get('automation_url', 'N/A')}\n\n"
+                comment += f"**Manual Steps Required:**\n"
+                for instruction in goal_info.get('instructions', []):
+                    comment += f"{instruction}\n"
+                comment += f"\n**Note:** ActiveCampaign API v3 does not support direct goal creation. "
+                comment += f"The goal must be added through the ActiveCampaign UI."
+            else:
+                # If goal was created successfully (future API support)
+                comment = f"✅ Goal '{goal_name}' created successfully.\n\n"
+                comment += f"**ActiveCampaign Details:**\n"
+                comment += f"- Automation: {automation_name} (ID: {automation_id})\n"
+                comment += f"- Goal ID: {goal_info.get('id', 'N/A')}\n"
+                comment += f"- Goal Type: Contact\n\n"
+                comment += f"Goal is now configured in the automation workflow."
             
             try:
                 self.linear.add_comment('TRA-65', comment)
@@ -331,11 +344,12 @@ class TaskExecutor:
             
             return {
                 'success': True,
-                'message': f'Goal "{goal_name}" created successfully',
+                'message': f'Goal "{goal_name}" - {goal_info.get("status", "processed")}',
                 'automation_id': automation_id,
                 'automation_name': automation_name,
-                'goal_id': goal.get('id'),
-                'goal_name': goal_name
+                'goal_info': goal_info,
+                'goal_name': goal_name,
+                'manual_required': goal_info.get('status') == 'manual_required'
             }
         except Exception as e:
             return {'success': False, 'error': str(e)}
