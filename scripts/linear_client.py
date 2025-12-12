@@ -152,67 +152,77 @@ class LinearClient:
         Returns:
             Issue data dictionary
         """
+        # Linear API uses filter format for identifier search
         query = """
-        query GetIssueByIdentifier($identifier: String!) {
-            issue(identifier: $identifier) {
-                id
-                identifier
-                title
-                description
-                state {
+        query GetIssueByIdentifier($filter: IssueFilter) {
+            issues(filter: $filter, first: 1) {
+                nodes {
                     id
-                    name
-                    type
-                }
-                priority
-                assignee {
-                    id
-                    name
-                    email
-                }
-                labels {
-                    nodes {
+                    identifier
+                    title
+                    description
+                    state {
                         id
                         name
+                        type
                     }
-                }
-                attachments {
-                    nodes {
+                    priority
+                    assignee {
                         id
-                        title
-                        url
+                        name
+                        email
                     }
-                }
-                comments {
-                    nodes {
-                        id
-                        body
-                        createdAt
-                        user {
+                    labels {
+                        nodes {
+                            id
                             name
                         }
                     }
-                }
-                relations {
-                    nodes {
-                        id
-                        type
-                        relatedIssue {
+                    attachments {
+                        nodes {
                             id
-                            identifier
                             title
+                            url
                         }
                     }
+                    comments {
+                        nodes {
+                            id
+                            body
+                            createdAt
+                            user {
+                                name
+                            }
+                        }
+                    }
+                    relations {
+                        nodes {
+                            id
+                            type
+                            relatedIssue {
+                                id
+                                identifier
+                                title
+                            }
+                        }
+                    }
+                    createdAt
+                    updatedAt
                 }
-                createdAt
-                updatedAt
             }
         }
         """
         
-        variables = {"identifier": identifier}
+        variables = {
+            "filter": {
+                "identifier": {
+                    "eq": identifier
+                }
+            }
+        }
         data = self._make_request(query, variables)
-        return data.get('issue', {})
+        issues = data.get('issues', {}).get('nodes', [])
+        return issues[0] if issues else {}
     
     def update_issue_status(self, issue_id: str, status_name: str) -> Dict:
         """

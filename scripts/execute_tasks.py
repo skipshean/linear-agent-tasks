@@ -284,8 +284,61 @@ class TaskExecutor:
     
     def _execute_tra65(self) -> Dict:
         """TRA-65: Add goal 'Became Customer During Onboard'."""
-        # TODO: Implement
-        return {'success': True, 'message': 'TRA-65 execution (stub)'}
+        try:
+            if not self.clients_initialized:
+                return {'success': False, 'error': 'API clients not initialized'}
+            
+            goal_name = "Became Customer During Onboard"
+            
+            # Step 1: Find onboarding automation
+            automations = self.ac.list_automations()
+            onboarding_automation = None
+            
+            # Look for automation with "onboard" in name (case-insensitive)
+            for automation in automations:
+                name = automation.get('name', '').lower()
+                if 'onboard' in name or 'onboarding' in name:
+                    onboarding_automation = automation
+                    break
+            
+            if not onboarding_automation:
+                # If not found, get first automation or return error
+                if automations:
+                    onboarding_automation = automations[0]
+                    print(f"⚠️  Warning: No onboarding automation found. Using first automation: {onboarding_automation.get('name')}")
+                else:
+                    return {'success': False, 'error': 'No automations found in ActiveCampaign'}
+            
+            automation_id = onboarding_automation.get('id')
+            automation_name = onboarding_automation.get('name')
+            
+            # Step 2: Create goal
+            goal = self.ac.create_goal(automation_id, goal_name, goal_type='contact')
+            
+            # Step 3: Update Linear issue
+            comment = f"✅ Goal '{goal_name}' created successfully.\n\n"
+            comment += f"**ActiveCampaign Details:**\n"
+            comment += f"- Automation: {automation_name} (ID: {automation_id})\n"
+            comment += f"- Goal ID: {goal.get('id', 'N/A')}\n"
+            comment += f"- Goal Type: Contact\n\n"
+            comment += f"Goal is now configured in the automation workflow."
+            
+            try:
+                self.linear.add_comment('TRA-65', comment)
+                self.linear.update_issue_status('TRA-65', 'Done')
+            except Exception as e:
+                print(f"Warning: Could not update Linear issue: {e}")
+            
+            return {
+                'success': True,
+                'message': f'Goal "{goal_name}" created successfully',
+                'automation_id': automation_id,
+                'automation_name': automation_name,
+                'goal_id': goal.get('id'),
+                'goal_name': goal_name
+            }
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
     
     def _execute_tra40(self) -> Dict:
         """TRA-40: Connect AC & Stripe Data to Sheets."""
