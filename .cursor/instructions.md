@@ -15,3 +15,6 @@ This repository helps identify and manage Linear tasks that can be automated or 
 - Focus on tasks with clear requirements and acceptance criteria
 - Don't execute tasks automatically - this is a planning repository
 
+
+
+
