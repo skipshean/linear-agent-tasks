@@ -125,20 +125,20 @@ These tasks have clear requirements, well-defined acceptance criteria, and can b
     - **Complexity:** Low-Medium
     - **Why:** Clear list, systematic creation
     - **Agent Can:** Create tags in ActiveCampaign following naming conventions
-    - **Needs Review:** Verify tag names match taxonomy
+    - **Important:** Check for existing tags with the same name in Trade Ideas ActiveCampaign account before creating new tags to avoid duplicates
+    - **Needs Review:** Verify tag names match taxonomy, confirm no duplicates created
 
-17. **TRA-60**: Group tags into folders by category
+17. **TRA-60**: Group tags using bracket naming convention (AC doesn't have folders)
     - **Agent Score:** 4/5
     - **Complexity:** Low
     - **Why:** Clear categorization
-    - **Agent Can:** Organize tags into folders
-    - **Needs Review:** Verify folder structure
+    - **Note:** ActiveCampaign does NOT have folders for organizing tags. Instead, use [Brackets] in tag names (e.g., `[Engagement] Active`, `[Customer] New`) to achieve alphabetical grouping in the tag list. Tags with brackets will group together alphabetically.
+    - **Agent Can:** Ensure all tags follow bracket naming convention for automatic grouping
+    - **Needs Review:** Verify tags group correctly alphabetically with bracket naming
 
 18. **TRA-61**: Add internal description to each category
-    - **Agent Score:** 5/5
-    - **Complexity:** Low
-    - **Why:** Simple documentation task
-    - **Agent Can:** Add descriptions to tag categories
+    - **Status:** ❌ **NOT POSSIBLE** - ActiveCampaign does not support folder descriptions or category descriptions for tags
+    - **Action:** Task should be closed/canceled as this feature doesn't exist in ActiveCampaign
 
 #### Configuration Tasks
 19. **TRA-63**: Add 6 emails (copy already written)
@@ -214,8 +214,8 @@ These issues have similar titles/descriptions and may be duplicates:
 #### Tag Architecture Tasks
 - **TRA-23**: Finalize Tag Architecture in AC (Parent issue)
 - **TRA-59**: Create all tags from the master list (Child of TRA-23)
-- **TRA-60**: Group tags into folders by category (Child of TRA-23)
-- **TRA-61**: Add internal description to each category (Child of TRA-23)
+- **TRA-60**: Group tags using bracket naming convention (Child of TRA-23) - Note: AC doesn't have folders, uses [Brackets] for alphabetical grouping
+- ~~**TRA-61**: Add internal description to each category~~ ❌ Canceled - Not possible (AC doesn't support category descriptions)
 - **TRA-35**: Implement Tag Naming Conventions
 - **TRA-34**: Archive Old/Legacy Tags in AC
 
@@ -305,7 +305,7 @@ These issues have similar titles/descriptions and may be duplicates:
    - Enables all other dashboards
 
 2. **Complete Tag Architecture Subtasks**
-   - TRA-59, TRA-60, TRA-61
+   - TRA-59, TRA-60 (TRA-61 canceled - not possible in AC)
    - These are quick wins
 
 3. **Set Up Duplicate Detection Process**
@@ -332,7 +332,6 @@ These issues have similar titles/descriptions and may be duplicates:
 
 ### Quick Wins (Low Effort, High Value)
 - TRA-56: Document lifecycle states
-- TRA-61: Add category descriptions
 - TRA-65: Add goal to automation
 - TRA-109: Paste SOP structure
 - TRA-106, TRA-107, TRA-108: Forecast subtasks
@@ -364,4 +363,6 @@ These issues have similar titles/descriptions and may be duplicates:
 2. Approve agent task list
 3. Configure Fireflies duplicate detection
 4. Begin execution of approved tasks
+
+
 
