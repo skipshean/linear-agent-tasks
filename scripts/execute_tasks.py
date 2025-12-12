@@ -277,13 +277,164 @@ class TaskExecutor:
     
     def _execute_tra59(self) -> Dict:
         """TRA-59: Create all tags from master list."""
-        # TODO: Implement
-        return {'success': True, 'message': 'TRA-59 execution (stub)'}
+        try:
+            if not self.clients_initialized:
+                return {'success': False, 'error': 'API clients not initialized'}
+            
+            # Step 1: Fetch master tag list from TRA-23 (parent issue)
+            issue_23 = self.linear.get_issue_by_identifier('TRA-23')
+            desc = issue_23.get('description', '')
+            
+            # Extract tags from description
+            import re
+            lines = desc.split('\n')
+            tag_list = []
+            
+            for line in lines:
+                line = line.strip()
+                # Match pattern: [Category] Tag Name (with optional — description)
+                match = re.match(r'^\[([^\]]+)\]\s+([^—\n]+?)(?:\s*—|$)', line)
+                if match:
+                    category = match.group(1).strip()
+                    tag_name = match.group(2).strip()
+                    # Skip headers and placeholders
+                    if tag_name and not tag_name.endswith('**') and '{Custom}' not in tag_name:
+                        full_tag = f'[{category}] {tag_name}'
+                        if full_tag not in tag_list:
+                            tag_list.append(full_tag)
+            
+            if not tag_list:
+                return {'success': False, 'error': 'No tags found in TRA-23 description'}
+            
+            print(f"Found {len(tag_list)} tags to create")
+            
+            # Step 2: Get existing tags from ActiveCampaign
+            existing_tags = self.ac.list_tags(limit=1000)
+            existing_tag_names = {tag.get('tag', '').lower(): tag for tag in existing_tags}
+            
+            # Step 3: Create tags (skip existing ones)
+            created = []
+            skipped = []
+            
+            for tag_name in tag_list:
+                # Check if tag already exists (case-insensitive)
+                if tag_name.lower() in existing_tag_names:
+                    skipped.append({'name': tag_name, 'reason': 'Already exists'})
+                else:
+                    try:
+                        tag = self.ac.create_tag(tag_name, tag_type='contact')
+                        created.append(tag)
+                        print(f"Created: {tag_name}")
+                    except Exception as e:
+                        skipped.append({'name': tag_name, 'reason': str(e)})
+            
+            # Step 4: Update Linear issue
+            comment = f"✅ Tag creation completed.\n\n"
+            comment += f"**Results:**\n"
+            comment += f"- Tags created: {len(created)}\n"
+            comment += f"- Tags skipped (already exist): {len(skipped)}\n"
+            comment += f"- Total tags processed: {len(tag_list)}\n\n"
+            
+            if created:
+                comment += f"**Created Tags ({len(created)}):**\n"
+                for tag in created[:20]:  # Show first 20
+                    comment += f"- {tag.get('tag', 'N/A')}\n"
+                if len(created) > 20:
+                    comment += f"... and {len(created) - 20} more\n"
+                comment += "\n"
+            
+            if skipped:
+                comment += f"**Skipped Tags ({len(skipped)}):**\n"
+                for skip in skipped[:10]:  # Show first 10
+                    comment += f"- {skip.get('name')} ({skip.get('reason')})\n"
+                if len(skipped) > 10:
+                    comment += f"... and {len(skipped) - 10} more\n"
+            
+            try:
+                self.linear.add_comment('TRA-59', comment)
+                if len(created) > 0:
+                    self.linear.update_issue_status('TRA-59', 'Done')
+            except Exception as e:
+                print(f"Warning: Could not update Linear issue: {e}")
+            
+            return {
+                'success': True,
+                'message': f'Created {len(created)} tags, skipped {len(skipped)}',
+                'created_count': len(created),
+                'skipped_count': len(skipped),
+                'total_tags': len(tag_list),
+                'created': [t.get('tag') for t in created],
+                'skipped': [s.get('name') for s in skipped]
+            }
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
     
     def _execute_tra60(self) -> Dict:
         """TRA-60: Group tags using bracket naming convention."""
-        # TODO: Implement
-        return {'success': True, 'message': 'TRA-60 execution (stub)'}
+        try:
+            if not self.clients_initialized:
+                return {'success': False, 'error': 'API clients not initialized'}
+            
+            # Get all tags from ActiveCampaign
+            all_tags = self.ac.list_tags(limit=1000)
+            
+            # Check which tags follow bracket naming convention
+            bracket_tags = []
+            non_bracket_tags = []
+            
+            for tag in all_tags:
+                tag_name = tag.get('tag', '')
+                if tag_name.startswith('[') and ']' in tag_name:
+                    bracket_tags.append(tag_name)
+                else:
+                    non_bracket_tags.append(tag_name)
+            
+            # TRA-60 is about ensuring bracket naming for grouping
+            # Since AC doesn't have folders, bracket naming groups tags alphabetically
+            # Most tags should already have brackets from TRA-59
+            
+            # Step 1: Verify bracket naming
+            total_tags = len(all_tags)
+            bracket_count = len(bracket_tags)
+            non_bracket_count = len(non_bracket_tags)
+            
+            # Step 2: Update Linear issue
+            comment = f"✅ Bracket naming convention verification completed.\n\n"
+            comment += f"**Tag Analysis:**\n"
+            comment += f"- Total tags: {total_tags}\n"
+            comment += f"- Tags with bracket naming: {bracket_count}\n"
+            comment += f"- Tags without brackets: {non_bracket_count}\n\n"
+            
+            if non_bracket_count > 0:
+                comment += f"**Tags without bracket naming ({non_bracket_count}):**\n"
+                for tag_name in sorted(non_bracket_tags)[:20]:
+                    comment += f"- {tag_name}\n"
+                if non_bracket_count > 20:
+                    comment += f"... and {non_bracket_count - 20} more\n"
+                comment += "\n"
+                comment += "**Note:** Tags with bracket naming (e.g., `[Category] Tag Name`) will group alphabetically in ActiveCampaign's tag list.\n"
+                comment += "Tags without brackets may need to be renamed to follow the convention.\n"
+            else:
+                comment += "✅ All tags follow bracket naming convention!\n"
+                comment += "Tags will group alphabetically by category in ActiveCampaign.\n"
+            
+            try:
+                self.linear.add_comment('TRA-60', comment)
+                if non_bracket_count == 0:
+                    self.linear.update_issue_status('TRA-60', 'Done')
+            except Exception as e:
+                print(f"Warning: Could not update Linear issue: {e}")
+            
+            return {
+                'success': True,
+                'message': f'Verified {bracket_count} bracket tags, {non_bracket_count} non-bracket tags',
+                'total_tags': total_tags,
+                'bracket_tags': bracket_count,
+                'non_bracket_tags': non_bracket_count,
+                'all_follow_convention': non_bracket_count == 0
+            }
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
     
     def _execute_tra63(self) -> Dict:
         """TRA-63: Add 6 emails to automation."""

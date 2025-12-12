@@ -20,7 +20,7 @@ from googleapiclient.errors import HttpError
 class GoogleDocsClient:
     """Client for Google Docs API."""
     
-    SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive.file']
+    SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
     
     def __init__(self, credentials_path: Optional[str] = None):
         """
@@ -46,21 +46,60 @@ class GoogleDocsClient:
         self.docs_service = build('docs', 'v1', credentials=self.credentials)
         self.drive_service = build('drive', 'v3', credentials=self.credentials)
     
-    def create_document(self, title: str, content: Optional[List[Dict]] = None) -> str:
+    def create_document(self, title: str, content: Optional[List[Dict]] = None, folder_id: Optional[str] = None) -> str:
         """
         Create a new Google Doc.
         
         Args:
             title: Document title
             content: Optional initial content (list of document elements)
+            folder_id: Optional folder ID to create document in (from GOOGLE_DRIVE_FOLDER_ID env var if not provided)
             
         Returns:
             Document ID
         """
         try:
-            # Create empty document
-            doc = self.docs_service.documents().create(body={'title': title}).execute()
-            doc_id = doc.get('documentId')
+            target_folder = folder_id or os.getenv('GOOGLE_DRIVE_FOLDER_ID')
+            
+            # Try creating via Docs API first (preferred method)
+            try:
+                doc = self.docs_service.documents().create(body={'title': title}).execute()
+                doc_id = doc.get('documentId')
+                
+                # Move document to specified folder if provided
+                if target_folder:
+                    try:
+                        # Get current parents
+                        file = self.drive_service.files().get(fileId=doc_id, fields='parents').execute()
+                        previous_parents = ','.join(file.get('parents', []))
+                        
+                        # Move to target folder
+                        self.drive_service.files().update(
+                            fileId=doc_id,
+                            addParents=target_folder,
+                            removeParents=previous_parents,
+                            fields='id, parents'
+                        ).execute()
+                    except Exception as e:
+                        print(f"Warning: Could not move document to folder {target_folder}: {e}")
+            except HttpError as docs_error:
+                # If Docs API fails, try creating via Drive API
+                if '403' in str(docs_error) or 'permission' in str(docs_error).lower():
+                    # Create via Drive API as fallback
+                    file_metadata = {
+                        'name': title,
+                        'mimeType': 'application/vnd.google-apps.document'
+                    }
+                    if target_folder:
+                        file_metadata['parents'] = [target_folder]
+                    
+                    file = self.drive_service.files().create(
+                        body=file_metadata,
+                        fields='id'
+                    ).execute()
+                    doc_id = file.get('id')
+                else:
+                    raise
             
             # Add content if provided
             if content:
@@ -71,6 +110,9 @@ class GoogleDocsClient:
             
             return doc_id
         except HttpError as error:
+            error_str = str(error)
+            if 'storageQuotaExceeded' in error_str or 'quota' in error_str.lower():
+                raise Exception(f"Google Drive storage quota exceeded. Please free up space in the shared folder.")
             raise Exception(f"Error creating document: {error}")
     
     def insert_text(self, document_id: str, text: str, index: int = 1) -> None:
@@ -178,7 +220,7 @@ class GoogleDocsClient:
 class GoogleSheetsClient:
     """Client for Google Sheets API."""
     
-    SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
+    SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
     
     def __init__(self, credentials_path: Optional[str] = None):
         """
@@ -202,12 +244,13 @@ class GoogleSheetsClient:
         self.sheets_service = build('sheets', 'v4', credentials=self.credentials)
         self.drive_service = build('drive', 'v3', credentials=self.credentials)
     
-    def create_spreadsheet(self, title: str) -> str:
+    def create_spreadsheet(self, title: str, folder_id: Optional[str] = None) -> str:
         """
         Create a new spreadsheet.
         
         Args:
             title: Spreadsheet title
+            folder_id: Optional folder ID to create spreadsheet in (from GOOGLE_DRIVE_FOLDER_ID env var if not provided)
             
         Returns:
             Spreadsheet ID
@@ -223,7 +266,28 @@ class GoogleSheetsClient:
             fields='spreadsheetId'
         ).execute()
         
-        return spreadsheet.get('spreadsheetId')
+        sheet_id = spreadsheet.get('spreadsheetId')
+        
+        # Move spreadsheet to specified folder if provided
+        target_folder = folder_id or os.getenv('GOOGLE_DRIVE_FOLDER_ID')
+        if target_folder:
+            try:
+                # Get current parents
+                file = self.drive_service.files().get(fileId=sheet_id, fields='parents').execute()
+                previous_parents = ','.join(file.get('parents', []))
+                
+                # Move to target folder
+                self.drive_service.files().update(
+                    fileId=sheet_id,
+                    addParents=target_folder,
+                    removeParents=previous_parents,
+                    fields='id, parents'
+                ).execute()
+            except Exception as e:
+                print(f"Warning: Could not move spreadsheet to folder {target_folder}: {e}")
+                # Continue anyway - spreadsheet was created
+        
+        return sheet_id
     
     def create_sheet(self, spreadsheet_id: str, sheet_name: str) -> None:
         """
