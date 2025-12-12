@@ -76,7 +76,17 @@ def main():
     if code:
         # Exchange code for token
         print("Exchanging authorization code for token...")
-        flow.fetch_token(code=code)
+        # Ensure redirect_uri matches what was used in authorization URL
+        # For web apps, use the first redirect URI from config
+        if 'web' in client_config:
+            redirect_uri = client_config['web'].get('redirect_uris', ['http://localhost'])[0]
+        elif 'installed' in client_config:
+            redirect_uri = client_config['installed'].get('redirect_uris', ['http://localhost'])[0]
+        else:
+            redirect_uri = 'http://localhost'
+        
+        # Fetch token with explicit redirect_uri
+        flow.fetch_token(code=code, redirect_uri=redirect_uri)
         credentials = flow.credentials
         
         # Save token
