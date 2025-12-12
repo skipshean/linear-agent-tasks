@@ -213,18 +213,253 @@ class TaskExecutor:
     
     def _execute_tra54(self) -> Dict:
         """TRA-54: Create AC Operations SOP Manual."""
-        # TODO: Implement
-        return {'success': True, 'message': 'TRA-54 execution (stub)'}
+        try:
+            if not self.clients_initialized:
+                return {'success': False, 'error': 'API clients not initialized'}
+            
+            # Get SOP structure from Linear issue
+            issue = self.linear.get_issue_by_identifier('TRA-54')
+            full_description = issue.get('description', '') if issue else ''
+            
+            # Create Google Doc with full SOP structure
+            doc_title = "Trade Ideas - ActiveCampaign Operations SOP Manual"
+            doc_id = self.google_docs.create_document(doc_title)
+            
+            # Format the content for Google Docs
+            # Extract the main structure (everything before "### Subtasks")
+            content_text = full_description
+            subtasks_start = content_text.find('### Subtasks')
+            if subtasks_start != -1:
+                content_text = content_text[:subtasks_start].strip()
+            
+            # Insert the full SOP structure
+            requests = [{
+                'insertText': {
+                    'location': {'index': 1},
+                    'text': content_text + '\n\n'
+                }
+            }]
+            
+            self.google_docs.docs_service.documents().batchUpdate(
+                documentId=doc_id,
+                body={'requests': requests}
+            ).execute()
+            
+            doc_url = self.google_docs.get_document_url(doc_id)
+            
+            # Update Linear issue
+            comment = f"✅ AC Operations SOP Manual created in Google Docs.\n\n**Document:** {doc_url}\n\n**Status:** Full SOP manual structure created with all sections:\n- System Overview\n- Naming Conventions\n- Tag Taxonomy\n- Automation Documentation\n- Campaign Management\n- List Hygiene & Deliverability\n- Reporting & Analytics\n- Troubleshooting\n- Change Log\n\n**Next Steps:** Populate each section with detailed content and procedures."
+            self.linear.add_comment('TRA-54', comment)
+            self.linear.update_issue_status('TRA-54', 'Done')
+            
+            return {
+                'success': True,
+                'message': 'TRA-54 execution completed',
+                'doc_id': doc_id,
+                'doc_url': doc_url
+            }
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
     
     def _execute_tra109(self) -> Dict:
         """TRA-109: Paste structure from SOP section."""
-        # TODO: Implement
-        return {'success': True, 'message': 'TRA-109 execution (stub)'}
+        try:
+            if not self.clients_initialized:
+                return {'success': False, 'error': 'API clients not initialized'}
+            
+            # Get SOP structure from TRA-54
+            issue54 = self.linear.get_issue_by_identifier('TRA-54')
+            sop_structure = issue54.get('description', '') if issue54 else ''
+            
+            # Extract the Table of Contents section
+            toc_start = sop_structure.find('### Table of Contents')
+            toc_end = sop_structure.find('### Section Templates', toc_start)
+            if toc_end == -1:
+                toc_end = sop_structure.find('### Subtasks', toc_start)
+            if toc_end == -1:
+                toc_end = len(sop_structure)
+            
+            structure_text = sop_structure[toc_start:toc_end].strip()
+            
+            # Create Google Doc with the structure
+            doc_title = "SOP Manual Structure"
+            doc_id = self.google_docs.create_document(doc_title)
+            
+            # Insert the structure text
+            requests = [{
+                'insertText': {
+                    'location': {'index': 1},
+                    'text': structure_text + '\n\n'
+                }
+            }]
+            
+            self.google_docs.docs_service.documents().batchUpdate(
+                documentId=doc_id,
+                body={'requests': requests}
+            ).execute()
+            
+            doc_url = self.google_docs.get_document_url(doc_id)
+            
+            # Update Linear issue
+            comment = f"✅ SOP structure pasted into Google Doc.\n\n**Document:** {doc_url}\n\n**Status:** Structure copied from TRA-54 and pasted into document."
+            self.linear.add_comment('TRA-109', comment)
+            self.linear.update_issue_status('TRA-109', 'Done')
+            
+            return {
+                'success': True,
+                'message': 'TRA-109 execution completed',
+                'doc_id': doc_id,
+                'doc_url': doc_url
+            }
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
     
     def _execute_tra41(self) -> Dict:
         """TRA-41: Build Base Data Tabs."""
-        # TODO: Implement
-        return {'success': True, 'message': 'TRA-41 execution (stub)'}
+        try:
+            if not self.clients_initialized:
+                return {'success': False, 'error': 'API clients not initialized'}
+            
+            # Create Google Sheet
+            sheet_title = "Trade Ideas - Email Marketing Analytics"
+            sheet_id = self.google_sheets.create_spreadsheet(sheet_title)
+            
+            # Define all tabs and their headers
+            tabs_config = {
+                # Raw Data Tabs
+                'Raw - Contacts': [
+                    ['email', 'first_name', 'last_name', 'created_date', 'tags', 'last_open', 'last_click']
+                ],
+                'Raw - Automations': [
+                    ['automation_id', 'automation_name', 'contact_email', 'entered_date', 'exited_date', 'status']
+                ],
+                'Raw - Campaigns': [
+                    ['campaign_id', 'campaign_name', 'contact_email', 'sent_date', 'opened', 'clicked', 'bounced']
+                ],
+                'Raw - Stripe': [
+                    ['customer_email', 'subscription_id', 'plan_name', 'status', 'mrr', 'billing_interval', 'created_date', 'canceled_date']
+                ],
+                # Processed Data Tabs
+                'Contacts': [
+                    ['email', 'first_name', 'last_name', 'created_date', 'engagement_tag', 'customer_tag', 
+                     'product_tag', 'intent_tags', 'interest_tags', 'suppress_tags', 'last_open', 'last_click',
+                     'stripe_status', 'stripe_mrr', 'stripe_plan']
+                ],
+                'Events': [
+                    ['event_id', 'email', 'event_type', 'event_date', 'source', 'source_name', 'details']
+                ],
+                'Subscriptions': [
+                    ['email', 'subscription_id', 'plan_name', 'status', 'mrr', 'billing_interval', 
+                     'created_date', 'canceled_date', 'cancel_reason']
+                ]
+            }
+            
+            # Get the spreadsheet service
+            sheets_service = self.google_sheets.sheets_service
+            
+            # Delete default "Sheet1" if it exists
+            try:
+                spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+                default_sheets = [s for s in spreadsheet.get('sheets', []) if s['properties']['title'] == 'Sheet1']
+                if default_sheets:
+                    requests = [{
+                        'deleteSheet': {
+                            'sheetId': default_sheets[0]['properties']['sheetId']
+                        }
+                    }]
+                    sheets_service.spreadsheets().batchUpdate(
+                        spreadsheetId=sheet_id,
+                        body={'requests': requests}
+                    ).execute()
+            except:
+                pass
+            
+            # Create all tabs with headers
+            created_tabs = []
+            for tab_name, headers in tabs_config.items():
+                # Add new sheet
+                add_sheet_request = {
+                    'addSheet': {
+                        'properties': {
+                            'title': tab_name
+                        }
+                    }
+                }
+                
+                result = sheets_service.spreadsheets().batchUpdate(
+                    spreadsheetId=sheet_id,
+                    body={'requests': [add_sheet_request]}
+                ).execute()
+                
+                new_sheet_id = result['replies'][0]['addSheet']['properties']['sheetId']
+                
+                # Add headers
+                range_name = f"{tab_name}!A1"
+                body = {
+                    'values': headers
+                }
+                sheets_service.spreadsheets().values().update(
+                    spreadsheetId=sheet_id,
+                    range=range_name,
+                    valueInputOption='RAW',
+                    body=body
+                ).execute()
+                
+                # Format header row (bold)
+                format_request = {
+                    'repeatCell': {
+                        'range': {
+                            'sheetId': new_sheet_id,
+                            'startRowIndex': 0,
+                            'endRowIndex': 1
+                        },
+                        'cell': {
+                            'userEnteredFormat': {
+                                'textFormat': {'bold': True},
+                                'backgroundColor': {'red': 0.9, 'green': 0.9, 'blue': 0.9}
+                            }
+                        },
+                        'fields': 'userEnteredFormat(textFormat,backgroundColor)'
+                    }
+                }
+                sheets_service.spreadsheets().batchUpdate(
+                    spreadsheetId=sheet_id,
+                    body={'requests': [format_request]}
+                ).execute()
+                
+                created_tabs.append(tab_name)
+            
+            sheet_url = self.google_sheets.get_spreadsheet_url(sheet_id)
+            
+            # Update Linear issue
+            comment = f"✅ Base Data Tabs created in Google Sheets.\n\n**Sheet:** {sheet_url}\n\n**Tabs Created ({len(created_tabs)}):**\n"
+            comment += "**Raw Data Tabs:**\n"
+            comment += "- Raw - Contacts\n"
+            comment += "- Raw - Automations\n"
+            comment += "- Raw - Campaigns\n"
+            comment += "- Raw - Stripe\n\n"
+            comment += "**Processed Data Tabs:**\n"
+            comment += "- Contacts (with schema for engagement, customer, product, intent, interest, suppress tags)\n"
+            comment += "- Events (unified activity log)\n"
+            comment += "- Subscriptions (MRR, plan distribution)\n\n"
+            comment += "**Next Steps:**\n"
+            comment += "1. Export data from ActiveCampaign and Stripe\n"
+            comment += "2. Import into Raw data tabs\n"
+            comment += "3. Add formulas to Processed tabs to transform raw data\n"
+            comment += "4. Set up weekly refresh process"
+            
+            self.linear.add_comment('TRA-41', comment)
+            self.linear.update_issue_status('TRA-41', 'Done')
+            
+            return {
+                'success': True,
+                'message': 'TRA-41 execution completed',
+                'sheet_id': sheet_id,
+                'sheet_url': sheet_url,
+                'tabs_created': created_tabs
+            }
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
     
     def _execute_tra42(self) -> Dict:
         """TRA-42: Build Engagement Dashboard."""
