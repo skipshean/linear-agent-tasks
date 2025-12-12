@@ -1,0 +1,19 @@
+Google OAuth Authorization URL
+==============================
+
+Visit this URL in your browser to authorize Google APIs:
+
+https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=702876153883-h70gq19jcld7eda4vt3qnnllfc446std.apps.googleusercontent.com&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdocuments+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fspreadsheets+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive&state=a3240rIJrcit884ojFIp1FVi272xwP&prompt=consent&access_type=offline
+
+Steps:
+1. Open the URL above in your browser
+2. Sign in with your Google account
+3. Grant permissions for Docs, Sheets, and Drive APIs
+4. You'll be redirected to localhost with a code parameter
+5. Copy the code from the redirect URL
+6. Run: python3 scripts/get_oauth_token.py --code YOUR_CODE
+
+Example redirect URL format:
+http://localhost:8080/?code=4/0AeanS...&scope=...
+
+After authorization, the token will be saved and reused automatically.
