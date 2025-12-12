@@ -40,8 +40,32 @@ class GoogleDocsClient:
                 creds_path, scopes=self.SCOPES
             )
         except Exception:
-            # Fall back to OAuth credentials
-            self.credentials = Credentials.from_authorized_user_file(creds_path, self.SCOPES)
+            # Check if it's an OAuth client secret file or authorized user file
+            import json
+            with open(creds_path, 'r') as f:
+                creds_data = json.load(f)
+            
+            # If it has 'installed' or 'web' key, it's a client secret file
+            if 'installed' in creds_data or 'web' in creds_data:
+                # This is a client secret file - need to do OAuth flow
+                from google_auth_oauthlib.flow import InstalledAppFlow
+                import pickle
+                
+                # Check for existing token
+                token_path = creds_path.replace('.json', '_token.pickle')
+                if os.path.exists(token_path):
+                    with open(token_path, 'rb') as token_file:
+                        self.credentials = pickle.load(token_file)
+                else:
+                    # Token file doesn't exist - need OAuth authorization
+                    raise Exception(
+                        "OAuth token not found. Please run authorization first:\n\n"
+                        "  python3 scripts/authorize_google_oauth.py\n\n"
+                        "This will open a browser for you to authorize Google APIs access."
+                    )
+            else:
+                # Try as authorized user file
+                self.credentials = Credentials.from_authorized_user_file(creds_path, self.SCOPES)
         
         self.docs_service = build('docs', 'v1', credentials=self.credentials)
         self.drive_service = build('drive', 'v3', credentials=self.credentials)
