@@ -43,14 +43,15 @@ class OAuthHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-            self.wfile.write(b"""
+            html = """
             <html><head><title>Success</title></head>
             <body style="font-family: Arial; text-align: center; padding: 50px;">
-            <h1 style="color: green;">✅ Authorization Successful!</h1>
+            <h1 style="color: green;">Authorization Successful!</h1>
             <p>You can close this window.</p>
             <p>Return to the terminal to see the result.</p>
             </body></html>
-            """)
+            """
+            self.wfile.write(html.encode('utf-8'))
             return
         elif 'error' in params:
             error = params['error'][0]
