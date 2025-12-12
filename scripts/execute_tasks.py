@@ -1,0 +1,293 @@
+#!/usr/bin/env python3
+"""
+Master script for executing Linear agent tasks.
+
+This script coordinates execution of High and Medium Priority agent tasks
+from the agent-task-analysis.md plan.
+
+Usage:
+    python execute_tasks.py --task TRA-56
+    python execute_tasks.py --phase quick-wins
+    python execute_tasks.py --all
+"""
+
+import os
+import sys
+import argparse
+import json
+from typing import List, Dict, Optional
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Import API clients (to be implemented)
+# from linear_client import LinearClient
+# from google_client import GoogleDocsClient, GoogleSheetsClient
+# from activecampaign_client import ActiveCampaignClient
+
+
+class TaskExecutor:
+    """Main executor for Linear agent tasks."""
+    
+    def __init__(self):
+        """Initialize task executor with API clients."""
+        # Initialize API clients
+        # self.linear = LinearClient(os.getenv('LINEAR_API_KEY'))
+        # self.google_docs = GoogleDocsClient(os.getenv('GOOGLE_CREDENTIALS_PATH'))
+        # self.google_sheets = GoogleSheetsClient(os.getenv('GOOGLE_CREDENTIALS_PATH'))
+        # self.ac = ActiveCampaignClient(
+        #     os.getenv('ACTIVE_CAMPAIGN_API_URL'),
+        #     os.getenv('ACTIVE_CAMPAIGN_API_KEY')
+        # )
+        pass
+    
+    def execute_task(self, task_id: str) -> Dict:
+        """
+        Execute a specific task by ID.
+        
+        Args:
+            task_id: Linear issue ID (e.g., 'TRA-56')
+            
+        Returns:
+            Dict with execution results
+        """
+        print(f"Executing task: {task_id}")
+        
+        # Map task IDs to execution functions
+        task_map = {
+            'TRA-56': self._execute_tra56,
+            'TRA-54': self._execute_tra54,
+            'TRA-109': self._execute_tra109,
+            'TRA-41': self._execute_tra41,
+            'TRA-42': self._execute_tra42,
+            'TRA-43': self._execute_tra43,
+            'TRA-44': self._execute_tra44,
+            'TRA-45': self._execute_tra45,
+            'TRA-46': self._execute_tra46,
+            'TRA-47': self._execute_tra47,
+            'TRA-48': self._execute_tra48,
+            'TRA-49': self._execute_tra49,
+            'TRA-106': self._execute_tra106,
+            'TRA-107': self._execute_tra107,
+            'TRA-108': self._execute_tra108,
+            'TRA-59': self._execute_tra59,
+            'TRA-60': self._execute_tra60,
+            'TRA-63': self._execute_tra63,
+            'TRA-64': self._execute_tra64,
+            'TRA-65': self._execute_tra65,
+            'TRA-40': self._execute_tra40,
+            'TRA-51': self._execute_tra51,
+            'TRA-52': self._execute_tra52,
+            'TRA-53': self._execute_tra53,
+        }
+        
+        if task_id not in task_map:
+            return {
+                'success': False,
+                'error': f'Unknown task ID: {task_id}'
+            }
+        
+        try:
+            result = task_map[task_id]()
+            return result
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def execute_phase(self, phase: str) -> List[Dict]:
+        """Execute all tasks in a phase."""
+        phases = {
+            'quick-wins': ['TRA-56', 'TRA-65', 'TRA-109', 'TRA-54'],
+            'foundation': ['TRA-41', 'TRA-59', 'TRA-60'],
+            'dashboards': ['TRA-42', 'TRA-43', 'TRA-44', 'TRA-45', 'TRA-46', 'TRA-47', 'TRA-48'],
+            'forecast': ['TRA-49', 'TRA-106', 'TRA-107', 'TRA-108'],
+            'configuration': ['TRA-63', 'TRA-64', 'TRA-40', 'TRA-51', 'TRA-52', 'TRA-53'],
+        }
+        
+        if phase not in phases:
+            print(f"Unknown phase: {phase}")
+            return []
+        
+        results = []
+        for task_id in phases[phase]:
+            result = self.execute_task(task_id)
+            results.append({
+                'task_id': task_id,
+                **result
+            })
+        
+        return results
+    
+    # Task execution methods (stubs - to be implemented)
+    
+    def _execute_tra56(self) -> Dict:
+        """TRA-56: Document all lifecycle states in Google Doc."""
+        # TODO: Implement
+        # 1. Fetch task details from Linear
+        # 2. Gather lifecycle state information
+        # 3. Create Google Doc with structure
+        # 4. Update Linear issue
+        return {'success': True, 'message': 'TRA-56 execution (stub)'}
+    
+    def _execute_tra54(self) -> Dict:
+        """TRA-54: Create AC Operations SOP Manual."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-54 execution (stub)'}
+    
+    def _execute_tra109(self) -> Dict:
+        """TRA-109: Paste structure from SOP section."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-109 execution (stub)'}
+    
+    def _execute_tra41(self) -> Dict:
+        """TRA-41: Build Base Data Tabs."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-41 execution (stub)'}
+    
+    def _execute_tra42(self) -> Dict:
+        """TRA-42: Build Engagement Dashboard."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-42 execution (stub)'}
+    
+    def _execute_tra43(self) -> Dict:
+        """TRA-43: Build Revenue Dashboard."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-43 execution (stub)'}
+    
+    def _execute_tra44(self) -> Dict:
+        """TRA-44: Build Cohort & Funnel Dashboard."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-44 execution (stub)'}
+    
+    def _execute_tra45(self) -> Dict:
+        """TRA-45: Build Intent Radar Dashboard."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-45 execution (stub)'}
+    
+    def _execute_tra46(self) -> Dict:
+        """TRA-46: Build Automation Performance Dashboard."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-46 execution (stub)'}
+    
+    def _execute_tra47(self) -> Dict:
+        """TRA-47: Build Suppression & Hygiene Monitor Dashboard."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-47 execution (stub)'}
+    
+    def _execute_tra48(self) -> Dict:
+        """TRA-48: Build Weekly Executive Summary Dashboard."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-48 execution (stub)'}
+    
+    def _execute_tra49(self) -> Dict:
+        """TRA-49: Implement Intent-Based MRR Forecast Sheet."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-49 execution (stub)'}
+    
+    def _execute_tra106(self) -> Dict:
+        """TRA-106: Add counts by intent segment."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-106 execution (stub)'}
+    
+    def _execute_tra107(self) -> Dict:
+        """TRA-107: Apply probability weights from Drop 8."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-107 execution (stub)'}
+    
+    def _execute_tra108(self) -> Dict:
+        """TRA-108: Calculate 30-day forecasted MRR."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-108 execution (stub)'}
+    
+    def _execute_tra59(self) -> Dict:
+        """TRA-59: Create all tags from master list."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-59 execution (stub)'}
+    
+    def _execute_tra60(self) -> Dict:
+        """TRA-60: Group tags using bracket naming convention."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-60 execution (stub)'}
+    
+    def _execute_tra63(self) -> Dict:
+        """TRA-63: Add 6 emails to automation."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-63 execution (stub)'}
+    
+    def _execute_tra64(self) -> Dict:
+        """TRA-64: Add Upgrade Intent tagging on key links."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-64 execution (stub)'}
+    
+    def _execute_tra65(self) -> Dict:
+        """TRA-65: Add goal 'Became Customer During Onboard'."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-65 execution (stub)'}
+    
+    def _execute_tra40(self) -> Dict:
+        """TRA-40: Connect AC & Stripe Data to Sheets."""
+        # TODO: Implement (partial - manual CSV exports needed)
+        return {'success': True, 'message': 'TRA-40 execution (stub)'}
+    
+    def _execute_tra51(self) -> Dict:
+        """TRA-51: Implement Global Naming Conventions in AC."""
+        # TODO: Implement
+        return {'success': True, 'message': 'TRA-51 execution (stub)'}
+    
+    def _execute_tra52(self) -> Dict:
+        """TRA-52: Validate SPF/DKIM/DMARC & Domain Health."""
+        # TODO: Implement (partial - DNS changes need approval)
+        return {'success': True, 'message': 'TRA-52 execution (stub)'}
+    
+    def _execute_tra53(self) -> Dict:
+        """TRA-53: Confirm AC Site Tracking & Key Events."""
+        # TODO: Implement (partial - code changes need review)
+        return {'success': True, 'message': 'TRA-53 execution (stub)'}
+
+
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(description='Execute Linear agent tasks')
+    parser.add_argument('--task', help='Execute specific task ID (e.g., TRA-56)')
+    parser.add_argument('--phase', help='Execute phase (quick-wins, foundation, dashboards, forecast, configuration)')
+    parser.add_argument('--all', action='store_true', help='Execute all high and medium priority tasks')
+    parser.add_argument('--list', action='store_true', help='List all available tasks')
+    
+    args = parser.parse_args()
+    
+    executor = TaskExecutor()
+    
+    if args.list:
+        print("Available tasks:")
+        print("  Quick Wins: TRA-56, TRA-65, TRA-109, TRA-54")
+        print("  Foundation: TRA-41, TRA-59, TRA-60")
+        print("  Dashboards: TRA-42-48")
+        print("  Forecast: TRA-49, TRA-106-108")
+        print("  Configuration: TRA-63-65, TRA-40, TRA-51-53")
+        return
+    
+    if args.task:
+        result = executor.execute_task(args.task)
+        print(json.dumps(result, indent=2))
+    elif args.phase:
+        results = executor.execute_phase(args.phase)
+        print(json.dumps(results, indent=2))
+    elif args.all:
+        # Execute all tasks in priority order
+        phases = ['quick-wins', 'foundation', 'dashboards', 'forecast', 'configuration']
+        all_results = []
+        for phase in phases:
+            print(f"\n=== Executing Phase: {phase} ===")
+            results = executor.execute_phase(phase)
+            all_results.extend(results)
+        print("\n=== All Results ===")
+        print(json.dumps(all_results, indent=2))
+    else:
+        parser.print_help()
+
+
+if __name__ == '__main__':
+    main()
