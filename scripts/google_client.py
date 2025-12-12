@@ -39,11 +39,18 @@ class GoogleDocsClient:
             self.credentials = service_account.Credentials.from_service_account_file(
                 creds_path, scopes=self.SCOPES
             )
-        except Exception:
+        except Exception as service_account_error:
             # Check if it's an OAuth client secret file or authorized user file
             import json
-            with open(creds_path, 'r') as f:
-                creds_data = json.load(f)
+            try:
+                with open(creds_path, 'r') as f:
+                    creds_data = json.load(f)
+            except Exception as json_error:
+                raise Exception(
+                    f"Failed to load credentials file {creds_path}.\n"
+                    f"Service account error: {service_account_error}\n"
+                    f"JSON parse error: {json_error}"
+                )
             
             # If it has 'installed' or 'web' key, it's a client secret file
             if 'installed' in creds_data or 'web' in creds_data:
@@ -54,18 +61,41 @@ class GoogleDocsClient:
                 # Check for existing token
                 token_path = creds_path.replace('.json', '_token.pickle')
                 if os.path.exists(token_path):
-                    with open(token_path, 'rb') as token_file:
-                        self.credentials = pickle.load(token_file)
+                    try:
+                        with open(token_path, 'rb') as token_file:
+                            self.credentials = pickle.load(token_file)
+                        # Verify credentials are valid
+                        if not self.credentials.valid:
+                            # Try to refresh if expired
+                            from google.auth.transport.requests import Request
+                            if self.credentials.expired and self.credentials.refresh_token:
+                                self.credentials.refresh(Request())
+                    except Exception as e:
+                        raise Exception(
+                            f"Failed to load OAuth token from {token_path}: {e}\n\n"
+                            "Please run authorization again:\n"
+                            "  python3 scripts/quick_oauth.py\n"
+                        )
                 else:
                     # Token file doesn't exist - need OAuth authorization
                     raise Exception(
                         "OAuth token not found. Please run authorization first:\n\n"
-                        "  python3 scripts/authorize_google_oauth.py\n\n"
-                        "This will open a browser for you to authorize Google APIs access."
+                        "  python3 scripts/quick_oauth.py\n\n"
+                        "This will generate an authorization URL for you to visit."
                     )
             else:
                 # Try as authorized user file
-                self.credentials = Credentials.from_authorized_user_file(creds_path, self.SCOPES)
+                try:
+                    self.credentials = Credentials.from_authorized_user_file(creds_path, self.SCOPES)
+                except Exception as e:
+                    raise Exception(
+                        f"Failed to load credentials from {creds_path}.\n"
+                        f"Error: {e}\n\n"
+                        "Expected either:\n"
+                        "  - Service account JSON file\n"
+                        "  - OAuth client secret JSON file (with 'web' or 'installed' key)\n"
+                        "  - Authorized user JSON file (with 'client_id', 'refresh_token', etc.)"
+                    )
         
         self.docs_service = build('docs', 'v1', credentials=self.credentials)
         self.drive_service = build('drive', 'v3', credentials=self.credentials)
@@ -276,12 +306,68 @@ class GoogleSheetsClient:
         if not creds_path:
             raise ValueError("Google credentials path required. Set GOOGLE_CREDENTIALS_PATH env var.")
         
+        # Try service account first, then OAuth
         try:
             self.credentials = service_account.Credentials.from_service_account_file(
                 creds_path, scopes=self.SCOPES
             )
-        except Exception:
-            self.credentials = Credentials.from_authorized_user_file(creds_path, self.SCOPES)
+        except Exception as service_account_error:
+            # Check if it's an OAuth client secret file or authorized user file
+            import json
+            try:
+                with open(creds_path, 'r') as f:
+                    creds_data = json.load(f)
+            except Exception as json_error:
+                raise Exception(
+                    f"Failed to load credentials file {creds_path}.\n"
+                    f"Service account error: {service_account_error}\n"
+                    f"JSON parse error: {json_error}"
+                )
+            
+            # If it has 'installed' or 'web' key, it's a client secret file
+            if 'installed' in creds_data or 'web' in creds_data:
+                # This is a client secret file - need to do OAuth flow
+                from google_auth_oauthlib.flow import InstalledAppFlow
+                import pickle
+                
+                # Check for existing token
+                token_path = creds_path.replace('.json', '_token.pickle')
+                if os.path.exists(token_path):
+                    try:
+                        with open(token_path, 'rb') as token_file:
+                            self.credentials = pickle.load(token_file)
+                        # Verify credentials are valid
+                        if not self.credentials.valid:
+                            # Try to refresh if expired
+                            from google.auth.transport.requests import Request
+                            if self.credentials.expired and self.credentials.refresh_token:
+                                self.credentials.refresh(Request())
+                    except Exception as e:
+                        raise Exception(
+                            f"Failed to load OAuth token from {token_path}: {e}\n\n"
+                            "Please run authorization again:\n"
+                            "  python3 scripts/quick_oauth.py\n"
+                        )
+                else:
+                    # Token file doesn't exist - need OAuth authorization
+                    raise Exception(
+                        "OAuth token not found. Please run authorization first:\n\n"
+                        "  python3 scripts/quick_oauth.py\n\n"
+                        "This will generate an authorization URL for you to visit."
+                    )
+            else:
+                # Try as authorized user file
+                try:
+                    self.credentials = Credentials.from_authorized_user_file(creds_path, self.SCOPES)
+                except Exception as e:
+                    raise Exception(
+                        f"Failed to load credentials from {creds_path}.\n"
+                        f"Error: {e}\n\n"
+                        "Expected either:\n"
+                        "  - Service account JSON file\n"
+                        "  - OAuth client secret JSON file (with 'web' or 'installed' key)\n"
+                        "  - Authorized user JSON file (with 'client_id', 'refresh_token', etc.)"
+                    )
         
         self.sheets_service = build('sheets', 'v4', credentials=self.credentials)
         self.drive_service = build('drive', 'v3', credentials=self.credentials)

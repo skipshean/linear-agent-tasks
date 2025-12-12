@@ -19,7 +19,13 @@ from typing import List, Dict, Optional
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+# Try loading from workspace root (parent directory of scripts/)
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+else:
+    # Fallback to current directory
+    load_dotenv()
 
 # Import API clients
 try:
