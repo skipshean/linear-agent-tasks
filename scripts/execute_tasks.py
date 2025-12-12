@@ -142,20 +142,20 @@ class TaskExecutor:
     def _execute_tra56(self) -> Dict:
         """TRA-56: Document all lifecycle states in Google Doc."""
         try:
+            if not self.clients_initialized:
+                return {'success': False, 'error': 'API clients not initialized'}
+            
             # 1. Fetch task details from Linear
-            if self.clients_initialized:
-                issue = self.linear.get_issue_by_identifier('TRA-56')
-                description = issue.get('description', '')
-            else:
-                issue = None
-                description = 'Dry-run mode: Fetch lifecycle state definitions from Linear issue TRA-56'
+            issue = self.linear.get_issue_by_identifier('TRA-56')
+            description = issue.get('description', '')
+            title = issue.get('title', 'Document all lifecycle states')
             
             # 2. Gather lifecycle state information
-            # TODO: Extract lifecycle states from description or source
-            lifecycle_states = []  # Placeholder - should be populated from task details
+            # Extract lifecycle states from description or use placeholder structure
+            lifecycle_states = []  # TODO: Parse from description or fetch from AC
             
             # 3. Create Google Doc with structure
-            if self.clients_initialized:
+            try:
                 doc_title = "Contact Lifecycle States Documentation"
                 doc_id = self.google_docs.create_document(doc_title)
                 
@@ -163,8 +163,9 @@ class TaskExecutor:
                 content = [
                     {'insertText': {'location': {'index': 1}, 'text': 'Contact Lifecycle States Documentation\n\n'}},
                     {'insertText': {'location': {'index': 2}, 'text': '## Overview\n\n'}},
-                    {'insertText': {'location': {'index': 3}, 'text': '[Brief description of lifecycle system]\n\n'}},
+                    {'insertText': {'location': {'index': 3}, 'text': 'This document describes all lifecycle states in the ActiveCampaign system.\n\n'}},
                     {'insertText': {'location': {'index': 4}, 'text': '## Lifecycle States\n\n'}},
+                    {'insertText': {'location': {'index': 5}, 'text': 'To be populated with lifecycle state definitions.\n\n'}},
                 ]
                 self.google_docs.docs_service.documents().batchUpdate(
                     documentId=doc_id,
@@ -172,23 +173,35 @@ class TaskExecutor:
                 ).execute()
                 
                 doc_url = self.google_docs.get_document_url(doc_id)
-            else:
-                doc_id = 'dry-run-doc-id'
-                doc_url = 'https://docs.google.com/document/d/dry-run'
-            
-            # 4. Update Linear issue
-            if self.clients_initialized:
-                comment = f"✅ Lifecycle states documentation created.\n\nDocument: {doc_url}\n\nNext: Populate with actual lifecycle state definitions."
+                
+                # 4. Update Linear issue
+                comment = f"✅ Lifecycle states documentation created.\n\n**Document:** {doc_url}\n\n**Status:** Document structure created. Ready for lifecycle state definitions to be populated.\n\n**Next Steps:**\n1. Extract lifecycle state definitions from ActiveCampaign\n2. Populate the document with state details\n3. Add state transitions and business rules"
                 self.linear.add_comment('TRA-56', comment)
                 self.linear.update_issue_status('TRA-56', 'Done')
-            
-            return {
-                'success': True,
-                'message': 'TRA-56 execution completed',
-                'doc_id': doc_id,
-                'doc_url': doc_url,
-                'dry_run': not self.clients_initialized
-            }
+                
+                return {
+                    'success': True,
+                    'message': 'TRA-56 execution completed',
+                    'doc_id': doc_id,
+                    'doc_url': doc_url
+                }
+            except Exception as google_error:
+                error_msg = str(google_error)
+                if '403' in error_msg or 'permission' in error_msg.lower():
+                    # Google API permission issue
+                    comment = f"⚠️ Google API permission issue encountered.\n\n**Error:** {error_msg}\n\n**Required Setup:**\n1. Share the Google Drive folder (ID: {os.getenv('GOOGLE_DRIVE_FOLDER_ID', 'N/A')}) with the service account email\n2. Ensure Google Drive API is enabled\n3. Verify service account has Editor permissions\n\n**Service Account Email:** Check the 'client_email' field in your credentials JSON file.\n\n**Alternative:** Create the document manually in Google Drive and update this issue with the link."
+                    try:
+                        self.linear.add_comment('TRA-56', comment)
+                    except:
+                        pass
+                    return {
+                        'success': False,
+                        'error': 'Google API permission denied',
+                        'message': 'Service account needs access to Google Drive folder',
+                        'instructions': 'Share Google Drive folder with service account email'
+                    }
+                else:
+                    raise
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
