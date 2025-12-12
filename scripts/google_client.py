@@ -61,8 +61,10 @@ class GoogleDocsClient:
         try:
             target_folder = folder_id or os.getenv('GOOGLE_DRIVE_FOLDER_ID')
             
-            # Try creating via Docs API first (preferred method)
+            # Check if we're using a service account with no quota
+            # If quota error, provide helpful message
             try:
+                # Try creating via Docs API first (preferred method)
                 doc = self.docs_service.documents().create(body={'title': title}).execute()
                 doc_id = doc.get('documentId')
                 
@@ -83,8 +85,9 @@ class GoogleDocsClient:
                     except Exception as e:
                         print(f"Warning: Could not move document to folder {target_folder}: {e}")
             except HttpError as docs_error:
+                error_str = str(docs_error)
                 # If Docs API fails, try creating via Drive API
-                if '403' in str(docs_error) or 'permission' in str(docs_error).lower():
+                if '403' in error_str or 'permission' in error_str.lower():
                     # Create via Drive API as fallback
                     file_metadata = {
                         'name': title,
@@ -93,11 +96,26 @@ class GoogleDocsClient:
                     if target_folder:
                         file_metadata['parents'] = [target_folder]
                     
-                    file = self.drive_service.files().create(
-                        body=file_metadata,
-                        fields='id'
-                    ).execute()
-                    doc_id = file.get('id')
+                    try:
+                        file = self.drive_service.files().create(
+                            body=file_metadata,
+                            fields='id'
+                        ).execute()
+                        doc_id = file.get('id')
+                    except HttpError as drive_error:
+                        drive_error_str = str(drive_error)
+                        if 'storageQuotaExceeded' in drive_error_str or 'quota' in drive_error_str.lower():
+                            # Service account has no quota - provide helpful error
+                            raise Exception(
+                                "Google Drive storage quota exceeded. Service account has 0 GB quota.\n\n"
+                                "Solutions:\n"
+                                "1. Use OAuth 2.0 credentials instead of service account\n"
+                                "2. Request quota increase for service account\n"
+                                "3. Use domain-wide delegation (Google Workspace)\n"
+                                "4. Create documents manually in Google Drive\n\n"
+                                "See GOOGLE-DRIVE-QUOTA-SOLUTION.md for details."
+                            )
+                        raise
                 else:
                     raise
             
