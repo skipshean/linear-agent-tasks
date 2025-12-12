@@ -24,18 +24,19 @@ pip install -r scripts/requirements.txt
 
 ### Step 2: Configure API Credentials
 
-Create `.env` file in workspace root:
-
+**Option A: Interactive Setup (Recommended)**
 ```bash
-# Linear API
-LINEAR_API_KEY=lin_api_...
+python scripts/setup_apis.py
+```
 
-# Google APIs (path to credentials JSON)
-GOOGLE_CREDENTIALS_PATH=/path/to/credentials.json
+**Option B: Manual Setup**
+1. Copy template: `cp .env.template .env`
+2. Edit `.env` with your credentials
+3. See detailed guides in `/scripts/setup_*.md`
 
-# ActiveCampaign API
-ACTIVE_CAMPAIGN_API_URL=https://your-account.api-us1.com
-ACTIVE_CAMPAIGN_API_KEY=your_api_key
+**Validate your setup:**
+```bash
+python scripts/validate_apis.py
 ```
 
 See `/execution-requirements.md` for detailed API setup instructions.

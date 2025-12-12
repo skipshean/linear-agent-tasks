@@ -1,5 +1,28 @@
 # Task Execution Requirements
 
+## Quick Setup
+
+**Fastest way to get started:**
+```bash
+# Run interactive setup script
+python scripts/setup_apis.py
+
+# Then validate your configuration
+python scripts/validate_apis.py
+```
+
+**Or manually:**
+1. Copy `.env.template` to `.env`
+2. Fill in your API credentials
+3. Run validation script
+
+See detailed guides:
+- [Linear API Setup](scripts/setup_linear_api.md)
+- [Google APIs Setup](scripts/setup_google_apis.md)
+- [ActiveCampaign API Setup](scripts/setup_activecampaign_api.md)
+
+---
+
 ## API Access Required
 
 ### 1. Linear API
