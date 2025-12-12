@@ -15,13 +15,10 @@ This directory contains detailed execution guides for each High and Medium Prior
 - [TRA-60](TRA-59-create-tags.md#step-3-prepare-tag-list) - Group tags using bracket naming (coordinate with TRA-59)
 
 ### Dashboard Tasks
-- TRA-42: Build Engagement Dashboard (guide needed)
-- TRA-43: Build Revenue Dashboard (guide needed)
-- TRA-44: Build Cohort & Funnel Dashboard (guide needed)
-- TRA-45: Build Intent Radar Dashboard (guide needed)
-- TRA-46: Build Automation Performance Dashboard (guide needed)
-- TRA-47: Build Suppression & Hygiene Monitor Dashboard (guide needed)
-- TRA-48: Build Weekly Executive Summary Dashboard (guide needed)
+- [TRA-42](TRA-42-engagement-dashboard.md) - Build Engagement Dashboard
+- [TRA-43](TRA-43-revenue-dashboard.md) - Build Revenue Dashboard
+- [TRA-44](TRA-44-cohort-funnel-dashboard.md) - Build Cohort & Funnel Dashboard
+- [TRA-45-48](TRA-45-48-remaining-dashboards.md) - Remaining dashboards (Intent Radar, Automation Performance, Suppression & Hygiene, Executive Summary)
 
 ### Forecast Tasks
 - [TRA-49](TRA-49-forecast-sheet.md) - Implement Intent-Based MRR Forecast Sheet
@@ -32,10 +29,7 @@ This directory contains detailed execution guides for each High and Medium Prior
 - [TRA-65](TRA-65-add-goal.md) - Add goal "Became Customer During Onboard"
 
 ### Medium Priority Tasks
-- TRA-40: Connect AC & Stripe Data to Sheets (guide needed)
-- TRA-51: Implement Global Naming Conventions (guide needed)
-- TRA-52: Validate SPF/DKIM/DMARC (guide needed)
-- TRA-53: Confirm AC Site Tracking (guide needed)
+- [TRA-40, TRA-51-53](TRA-40-51-52-53-medium-priority.md) - Medium priority tasks (Data connection, Naming conventions, Domain validation, Tracking verification)
 
 ## Execution Order
 
