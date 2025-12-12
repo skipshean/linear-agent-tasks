@@ -1,0 +1,16 @@
+# Cursor Rules for Linear Agent Tasks
+
+## Project Context
+This repository manages planning and execution of Linear tasks suitable for AI agent automation.
+
+## Guidelines
+- Focus on identifying tasks that are well-defined and suitable for automation
+- Document duplicate issues from Fireflies integration
+- Create clear, actionable plans for agent execution
+- Maintain clear documentation of task analysis and categorization
+
+## Code Style
+- Use clear, descriptive commit messages
+- Document decisions and rationale
+- Keep files organized and well-commented
+
