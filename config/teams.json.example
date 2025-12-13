@@ -1,0 +1,38 @@
+{
+  "teams": [
+    {
+      "id": "example-team",
+      "name": "Example Team",
+      "linear": {
+        "api_key": "lin_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "google": {
+        "credentials_path": "credentials/example-google-credentials.json",
+        "drive_folder_id": "1a2b3c4d5e6f7g8h9i0j",
+        "cloud_project_id": "my-google-cloud-project",
+        "use_shared_project": false
+      },
+      "activecampaign": {
+        "api_url": "https://example.api-us1.com",
+        "api_key": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "enabled": true,
+      "notes": "Example team configuration - replace with your actual values"
+    },
+    {
+      "id": "shared-project-team",
+      "name": "Team Using Shared Project",
+      "linear": {
+        "api_key": "lin_api_yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+      },
+      "google": {
+        "credentials_path": "credentials/shared-google-credentials.json",
+        "drive_folder_id": "9z8y7x6w5v4u3t2s1r0q",
+        "cloud_project_id": "shared-project-id",
+        "use_shared_project": true
+      },
+      "enabled": true,
+      "notes": "This team uses a shared Google Cloud project"
+    }
+  ]
+}

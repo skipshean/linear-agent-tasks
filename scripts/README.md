@@ -1,104 +1,128 @@
-# Execution Scripts
+# Scripts Directory
 
 This directory contains Python scripts for executing Linear agent tasks.
 
-## Files
+## Quick Start
 
-- **execute_tasks.py** - Master execution script for running tasks
+**New to this?** Start with the unified setup:
+
+```bash
+python scripts/setup.py
+```
+
+This will guide you through everything. See [GETTING-STARTED.md](../GETTING-STARTED.md) for details.
+
+## Main Scripts
+
+- **setup.py** - Unified setup and health checks (start here!)
+- **agent_workflow.py** - Main workflow script for working with tasks
+- **setup_team.py** - Add or update team configurations
+- **validate_teams.py** - Validate team configurations and API connections
+- **execute_tasks.py** - Legacy task execution (team-specific)
+- **cloud_executor.py** - Cloud execution management
+
+## API Clients
+
 - **linear_client.py** - Linear API client
 - **google_client.py** - Google Docs and Sheets API clients
 - **activecampaign_client.py** - ActiveCampaign API client
-- **requirements.txt** - Python dependencies
+- **team_manager.py** - Team and credential management
+- **task_analyzer.py** - Task analysis and categorization
 
 ## Setup
 
-### 1. Install Dependencies
+### Modern Setup (Recommended)
+
+Use the unified setup script:
 
 ```bash
-pip install -r requirements.txt
+python scripts/setup.py
 ```
 
-### 2. Configure Environment Variables
+This handles:
+- Dependency installation
+- Team configuration
+- API credential setup
+- Health checks
 
-Create a `.env` file in the workspace root:
+### Manual Setup (Advanced)
 
-```bash
-# Linear API
-LINEAR_API_KEY=your_linear_api_key
+If you prefer manual setup:
 
-# Google APIs
-GOOGLE_CREDENTIALS_PATH=/path/to/credentials.json
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-# ActiveCampaign API
-ACTIVE_CAMPAIGN_API_URL=https://your-account.api-us1.com
-ACTIVE_CAMPAIGN_API_KEY=your_api_key
-```
+2. Configure teams:
+   ```bash
+   python scripts/setup_team.py
+   ```
 
-### 3. Google API Setup
+3. Validate:
+   ```bash
+   python scripts/validate_teams.py
+   ```
 
+## Configuration
+
+Team configurations are stored in `config/teams.json` (not `.env` files).
+
+Each team can have:
+- **Linear API** - Required for task management
+- **Google APIs** - Optional, for Google Docs/Sheets automation
+- **ActiveCampaign API** - Optional, for ActiveCampaign automation
+
+See `config/teams.json.template` for the structure.
+
+### Getting API Keys
+
+**Linear API Key:**
+1. Go to [Linear Settings → API](https://linear.app/settings/api)
+2. Click "Create API Key"
+3. Copy the key (you'll only see it once!)
+
+**Google API Credentials:**
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a project or select existing
-3. Enable APIs:
-   - Google Docs API
-   - Google Sheets API
-   - Google Drive API
-4. Create credentials:
-   - Service Account (recommended) or OAuth 2.0
+3. Enable APIs: Docs API, Sheets API, Drive API
+4. Create credentials (Service Account or OAuth 2.0)
 5. Download credentials JSON file
-6. Set `GOOGLE_CREDENTIALS_PATH` to path of JSON file
-7. Share target Google Drive folders with service account email (if using service account)
 
-### 4. Linear API Setup
-
-1. Go to Linear Settings → API
-2. Create Personal API Key
-3. Set `LINEAR_API_KEY` environment variable
-
-### 5. ActiveCampaign API Setup
-
+**ActiveCampaign API:**
 1. Go to ActiveCampaign Settings → Developer
 2. Get API URL and API Key
-3. Set `ACTIVE_CAMPAIGN_API_URL` and `ACTIVE_CAMPAIGN_API_KEY` environment variables
+3. Enter during team setup
 
 ## Usage
 
-### Execute Single Task
+### Recommended: Use agent_workflow.py
+
+```bash
+# List teams
+python scripts/agent_workflow.py --list-teams
+
+# Analyze tasks
+python scripts/agent_workflow.py --team trade-ideas --analyze
+
+# Work on tasks
+python scripts/agent_workflow.py --team trade-ideas --work
+
+# Cloud execution
+python scripts/agent_workflow.py --team trade-ideas --work --cloud
+```
+
+See [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) for all commands.
+
+### Legacy: execute_tasks.py
+
+For backward compatibility, `execute_tasks.py` still works but uses environment variables:
 
 ```bash
 python scripts/execute_tasks.py --task TRA-56
 ```
 
-### Execute Phase
-
-```bash
-python scripts/execute_tasks.py --phase quick-wins
-```
-
-Available phases:
-- `quick-wins` - TRA-56, TRA-65, TRA-109, TRA-54
-- `foundation` - TRA-41, TRA-59, TRA-60
-- `dashboards` - TRA-42 through TRA-48
-- `forecast` - TRA-49, TRA-106-108
-- `configuration` - TRA-63-64, TRA-40, TRA-51-53
-
-### Execute All Tasks
-
-```bash
-python scripts/execute_tasks.py --all
-```
-
-### List Available Tasks
-
-```bash
-python scripts/execute_tasks.py --list
-```
-
-### Dry Run Mode
-
-If API credentials are not configured, the script will run in dry-run mode:
-- No actual API calls will be made
-- Tasks will report what they would do
-- Useful for testing script logic
+**Note:** For multi-team support, use `agent_workflow.py` instead.
 
 ## API Clients
 
@@ -110,7 +134,7 @@ from linear_client import LinearClient
 client = LinearClient()
 issue = client.get_issue_by_identifier('TRA-56')
 client.add_comment('TRA-56', 'Task completed')
-client.update_issue_status('TRA-56', 'Done')
+client.update_issue_status('TRA-56', 'In Review')
 ```
 
 ### GoogleDocsClient

@@ -1,19 +1,37 @@
 # Cursor Instructions
 
 ## Project Purpose
-This repository helps identify and manage Linear tasks that can be automated or assisted by AI agents.
+This repository provides a multi-team, multi-project system for managing and automating Linear tasks using AI agents.
 
-## Key Tasks
-1. Analyze Linear issues to identify agent-suitable tasks
-2. Detect and mark duplicate issues from Fireflies integration
-3. Create execution plans for agent automation
-4. Document findings and recommendations
+## Key Capabilities
+1. **Multi-Team Management**: Support for multiple Linear teams/projects with separate credentials
+2. **Task Analysis**: Automatically identify agent-suitable tasks across teams
+3. **Smart Execution**: Work on tasks by team, project, or evaluate all teams
+4. **Review Workflow**: Completed tasks go to "In Review" for manual approval
+
+## Usage Patterns
+
+### Working with Teams
+- Use `agent_workflow.py` as the main entry point
+- Commands:
+  - `--list-teams` - List all configured teams
+  - `--analyze-all` - Analyze all teams and provide summaries
+  - `--team TEAM_ID --analyze` - Analyze tasks for a specific team
+  - `--team TEAM_ID --work` - Work on agent-suitable tasks for a team
+  - `--team TEAM_ID --project PROJECT_ID --work` - Work on tasks in a project
+
+### Adding New Teams
+- Use `setup_team.py` for interactive team setup
+- Teams are stored in `config/teams.json` (gitignored)
+- Each team can have Linear, Google, and ActiveCampaign credentials
 
 ## Important Notes
-- Be mindful of Linear API rate limits (1500 requests/hour)
-- Mark duplicates in a reversible way (using labels or comments)
-- Focus on tasks with clear requirements and acceptance criteria
-- Don't execute tasks automatically - this is a planning repository
+- **Task Status Workflow**: When an agent completes a task, it MUST be marked as "In Review" status, NOT "Done". Only the user can determine if a task has been completed to their satisfaction and manually move it to "Done" status after review.
+- **Credentials**: Team credentials are stored in `config/teams.json` (not committed to git)
+- **Rate Limits**: Linear API has 1500 requests/hour limit
+- **Single User**: This system is designed for single-user use, not multi-tenant
+- **Focus**: Focus on tasks with clear requirements and acceptance criteria for best automation results
+
 
 
 

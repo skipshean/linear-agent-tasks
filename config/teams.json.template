@@ -1,0 +1,23 @@
+{
+  "teams": [
+    {
+      "id": "trade-ideas",
+      "name": "Trade Ideas",
+      "linear": {
+        "api_key": "YOUR_LINEAR_API_KEY_HERE"
+      },
+      "google": {
+        "credentials_path": "credentials/trade-ideas-google-credentials.json",
+        "drive_folder_id": "YOUR_GOOGLE_DRIVE_FOLDER_ID",
+        "cloud_project_id": "YOUR_GOOGLE_CLOUD_PROJECT_ID",
+        "use_shared_project": false
+      },
+      "activecampaign": {
+        "api_url": "https://your-account.api-us1.com",
+        "api_key": "YOUR_AC_API_KEY"
+      },
+      "enabled": true,
+      "notes": "Trade Ideas project - ActiveCampaign operations"
+    }
+  ]
+}

@@ -29,8 +29,12 @@ class ActiveCampaignClient:
         
         if not self.api_url or not self.api_key:
             raise ValueError(
-                "ActiveCampaign API URL and key required. "
-                "Set ACTIVE_CAMPAIGN_API_URL and ACTIVE_CAMPAIGN_API_KEY env vars."
+                "ActiveCampaign API URL and key required.\n\n"
+                "Next steps:\n"
+                "1. Get credentials from: ActiveCampaign Settings → Developer\n"
+                "2. Configure in team: python scripts/setup_team.py\n"
+                "   Or set ACTIVE_CAMPAIGN_API_URL and ACTIVE_CAMPAIGN_API_KEY env vars\n"
+                "Note: ActiveCampaign API is optional - skip if not needed"
             )
         
         self.headers = {

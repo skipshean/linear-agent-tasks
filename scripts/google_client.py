@@ -22,17 +22,26 @@ class GoogleDocsClient:
     
     SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
     
-    def __init__(self, credentials_path: Optional[str] = None):
+    def __init__(self, credentials_path: Optional[str] = None, project_id: Optional[str] = None):
         """
         Initialize Google Docs client.
         
         Args:
             credentials_path: Path to service account JSON or OAuth credentials.
                              If None, reads from GOOGLE_CREDENTIALS_PATH env var.
+            project_id: Google Cloud project ID. If None, uses default from credentials.
         """
         creds_path = credentials_path or os.getenv('GOOGLE_CREDENTIALS_PATH')
+        self.project_id = project_id or os.getenv('GOOGLE_CLOUD_PROJECT_ID')
         if not creds_path:
-            raise ValueError("Google credentials path required. Set GOOGLE_CREDENTIALS_PATH env var.")
+            raise ValueError(
+                "Google credentials path required.\n\n"
+                "Next steps:\n"
+                "1. Get credentials from: https://console.cloud.google.com/\n"
+                "2. Configure in team: python scripts/setup_team.py\n"
+                "   Or set GOOGLE_CREDENTIALS_PATH environment variable\n"
+                "Note: Google APIs are optional - skip if not needed"
+            )
         
         # Try service account first, then OAuth
         try:
@@ -294,17 +303,26 @@ class GoogleSheetsClient:
     
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
     
-    def __init__(self, credentials_path: Optional[str] = None):
+    def __init__(self, credentials_path: Optional[str] = None, project_id: Optional[str] = None):
         """
         Initialize Google Sheets client.
         
         Args:
             credentials_path: Path to service account JSON or OAuth credentials.
                              If None, reads from GOOGLE_CREDENTIALS_PATH env var.
+            project_id: Google Cloud project ID. If None, uses default from credentials.
         """
         creds_path = credentials_path or os.getenv('GOOGLE_CREDENTIALS_PATH')
+        self.project_id = project_id or os.getenv('GOOGLE_CLOUD_PROJECT_ID')
         if not creds_path:
-            raise ValueError("Google credentials path required. Set GOOGLE_CREDENTIALS_PATH env var.")
+            raise ValueError(
+                "Google credentials path required.\n\n"
+                "Next steps:\n"
+                "1. Get credentials from: https://console.cloud.google.com/\n"
+                "2. Configure in team: python scripts/setup_team.py\n"
+                "   Or set GOOGLE_CREDENTIALS_PATH environment variable\n"
+                "Note: Google APIs are optional - skip if not needed"
+            )
         
         # Try service account first, then OAuth
         try:

@@ -4,7 +4,7 @@ Linear API Client for fetching task details and updating issues.
 Usage:
     client = LinearClient(api_key)
     issue = client.get_issue('TRA-56')
-    client.update_issue('TRA-56', status='Done')
+    client.update_issue('TRA-56', status='In Review')
 """
 
 import os
@@ -25,7 +25,13 @@ class LinearClient:
         """
         self.api_key = api_key or os.getenv('LINEAR_API_KEY')
         if not self.api_key:
-            raise ValueError("Linear API key required. Set LINEAR_API_KEY env var or pass api_key parameter.")
+            raise ValueError(
+                "Linear API key required.\n\n"
+                "Next steps:\n"
+                "1. Get your API key from: https://linear.app/settings/api\n"
+                "2. Configure it in your team: python scripts/setup_team.py\n"
+                "   Or set LINEAR_API_KEY environment variable"
+            )
         
         self.base_url = "https://api.linear.app/graphql"
         self.headers = {
@@ -46,7 +52,13 @@ class LinearClient:
             Response data
         """
         if self.rate_limit_remaining <= 0:
-            raise Exception("Rate limit exceeded. Wait before making more requests.")
+            raise Exception(
+                "Rate limit exceeded. Wait before making more requests.\n\n"
+                "Next steps:\n"
+                "1. Wait 1 hour for rate limit to reset (1500 requests/hour)\n"
+                "2. Use --limit to work on fewer tasks at once\n"
+                "3. Consider cloud execution for large batches"
+            )
         
         payload = {"query": query}
         if variables:
@@ -192,7 +204,13 @@ class LinearClient:
                 break
         
         if not team_id:
-            raise ValueError(f"Team '{team_key}' not found")
+            raise ValueError(
+                f"Team '{team_key}' not found in Linear workspace.\n\n"
+                "Next steps:\n"
+                "1. Verify team key is correct (case-sensitive)\n"
+                "2. Check team exists in your Linear workspace\n"
+                "3. List available teams: python scripts/agent_workflow.py --list-teams"
+            )
         
         # Now get issues for this team and find the one matching the identifier
         # Simplified query to avoid complexity limits - fetch basic info first
@@ -242,7 +260,7 @@ class LinearClient:
         
         Args:
             issue_id: Issue identifier
-            status_name: Status name (e.g., 'Done', 'In Progress')
+            status_name: Status name (e.g., 'In Review', 'In Progress', 'Done')
             
         Returns:
             Updated issue data
@@ -271,7 +289,15 @@ class LinearClient:
                 break
         
         if not target_state:
-            raise ValueError(f"Status '{status_name}' not found. Available: {[s['name'] for s in states]}")
+            available = [s['name'] for s in states]
+            raise ValueError(
+                f"Status '{status_name}' not found.\n\n"
+                f"Available statuses: {', '.join(available)}\n\n"
+                "Next steps:\n"
+                "1. Check status name spelling (case-sensitive)\n"
+                "2. Use one of the available statuses listed above\n"
+                "3. Common statuses: 'In Review', 'In Progress', 'Done', 'Todo'"
+            )
         
         # Get issue ID first
         issue = self.get_issue_by_identifier(issue_id)
@@ -315,7 +341,13 @@ class LinearClient:
         """
         issue = self.get_issue_by_identifier(issue_id)
         if not issue:
-            raise ValueError(f"Issue {issue_id} not found")
+            raise ValueError(
+                f"Issue {issue_id} not found.\n\n"
+                "Next steps:\n"
+                "1. Verify issue ID is correct (format: TEAM-NUMBER, e.g., TRA-56)\n"
+                "2. Check issue exists in Linear\n"
+                "3. Verify you have access to the team/project"
+            )
         
         query = """
         mutation CreateComment($issueId: String!, $body: String!) {

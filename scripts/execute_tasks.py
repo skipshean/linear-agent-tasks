@@ -53,8 +53,12 @@ class TaskExecutor:
         if initialize_clients and API_CLIENTS_AVAILABLE:
             try:
                 self.linear = LinearClient()
-                self.google_docs = GoogleDocsClient()
-                self.google_sheets = GoogleSheetsClient()
+                
+                # Get Google project ID from environment if set
+                google_project_id = os.getenv('GOOGLE_CLOUD_PROJECT_ID')
+                self.google_docs = GoogleDocsClient(project_id=google_project_id)
+                self.google_sheets = GoogleSheetsClient(project_id=google_project_id)
+                
                 self.ac = ActiveCampaignClient()
                 self.clients_initialized = True
             except Exception as e:
@@ -183,7 +187,7 @@ class TaskExecutor:
                 # 4. Update Linear issue
                 comment = f"✅ Lifecycle states documentation created.\n\n**Document:** {doc_url}\n\n**Status:** Document structure created. Ready for lifecycle state definitions to be populated.\n\n**Next Steps:**\n1. Extract lifecycle state definitions from ActiveCampaign\n2. Populate the document with state details\n3. Add state transitions and business rules"
                 self.linear.add_comment('TRA-56', comment)
-                self.linear.update_issue_status('TRA-56', 'Done')
+                self.linear.update_issue_status('TRA-56', 'In Review')
                 
                 return {
                     'success': True,
@@ -250,7 +254,7 @@ class TaskExecutor:
             # Update Linear issue
             comment = f"✅ AC Operations SOP Manual created in Google Docs.\n\n**Document:** {doc_url}\n\n**Status:** Full SOP manual structure created with all sections:\n- System Overview\n- Naming Conventions\n- Tag Taxonomy\n- Automation Documentation\n- Campaign Management\n- List Hygiene & Deliverability\n- Reporting & Analytics\n- Troubleshooting\n- Change Log\n\n**Next Steps:** Populate each section with detailed content and procedures."
             self.linear.add_comment('TRA-54', comment)
-            self.linear.update_issue_status('TRA-54', 'Done')
+            self.linear.update_issue_status('TRA-54', 'In Review')
             
             return {
                 'success': True,
@@ -303,7 +307,7 @@ class TaskExecutor:
             # Update Linear issue
             comment = f"✅ SOP structure pasted into Google Doc.\n\n**Document:** {doc_url}\n\n**Status:** Structure copied from TRA-54 and pasted into document."
             self.linear.add_comment('TRA-109', comment)
-            self.linear.update_issue_status('TRA-109', 'Done')
+            self.linear.update_issue_status('TRA-109', 'In Review')
             
             return {
                 'success': True,
@@ -449,7 +453,7 @@ class TaskExecutor:
             comment += "4. Set up weekly refresh process"
             
             self.linear.add_comment('TRA-41', comment)
-            self.linear.update_issue_status('TRA-41', 'Done')
+            self.linear.update_issue_status('TRA-41', 'In Review')
             
             return {
                 'success': True,
@@ -594,7 +598,7 @@ class TaskExecutor:
             try:
                 self.linear.add_comment('TRA-59', comment)
                 if len(created) > 0:
-                    self.linear.update_issue_status('TRA-59', 'Done')
+                    self.linear.update_issue_status('TRA-59', 'In Review')
             except Exception as e:
                 print(f"Warning: Could not update Linear issue: {e}")
             
@@ -662,7 +666,7 @@ class TaskExecutor:
             try:
                 self.linear.add_comment('TRA-60', comment)
                 if non_bracket_count == 0:
-                    self.linear.update_issue_status('TRA-60', 'Done')
+                    self.linear.update_issue_status('TRA-60', 'In Review')
             except Exception as e:
                 print(f"Warning: Could not update Linear issue: {e}")
             
@@ -878,7 +882,7 @@ class TaskExecutor:
             
             try:
                 self.linear.add_comment('TRA-65', comment)
-                self.linear.update_issue_status('TRA-65', 'Done')
+                self.linear.update_issue_status('TRA-65', 'In Review')
             except Exception as e:
                 print(f"Warning: Could not update Linear issue: {e}")
             

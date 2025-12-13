@@ -22,6 +22,10 @@ credentials/
 !package.json
 !package-lock.json
 !tsconfig.json
+# But allow teams.json template
+!config/teams.json.template
+# Ignore actual teams.json (contains credentials)
+config/teams.json
 
 # Node modules (if applicable)
 node_modules/
@@ -35,6 +39,13 @@ venv/
 
 # Logs
 *.log
+
+# Cloud execution queues and packages
+.cloud-queue/
+.cloud-packages/
+analysis_results.json
+cloud_execution_results.json
+
 
 
 
